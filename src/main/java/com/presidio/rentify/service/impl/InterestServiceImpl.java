@@ -9,9 +9,14 @@ import com.presidio.rentify.exception.ResourceNotFoundException;
 import com.presidio.rentify.repository.InterestRepository;
 import com.presidio.rentify.repository.PropertyRepository;
 import com.presidio.rentify.repository.UserRepository;
+import com.presidio.rentify.security.AuthenticationFacade;
 import com.presidio.rentify.service.InterestService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -21,53 +26,43 @@ import java.util.stream.Collectors;
 @Service
 public class InterestServiceImpl implements InterestService {
 
-  @Autowired
-  private InterestRepository interestRepository;
+    @Autowired
+    private InterestRepository interestRepository;
 
-  @Autowired
-  private PropertyRepository propertyRepository;
+    @Autowired
+    private PropertyRepository propertyRepository;
 
-  @Autowired
-  private UserRepository userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-  @Autowired
-  private ModelMapper modelMapper;
+    @Autowired
+    private ModelMapper modelMapper;
 
-  public InterestResponseDTO addInterest(InterestRequestDTO interestRequestDTO) {
-    Property property = propertyRepository.findById(interestRequestDTO.getPropertyId())
-            .orElseThrow(() -> new ResourceNotFoundException("Property", "propertyId", interestRequestDTO.getPropertyId()));
+    @Autowired
+    private AuthenticationFacade authenticationFacade;
 
-    User buyer = userRepository.findById(interestRequestDTO.getBuyerId())
-            .orElseThrow(() -> new ResourceNotFoundException("User", "userId", interestRequestDTO.getBuyerId()));
+    @Override
+    public InterestResponseDTO expressInterest(Long propertyId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Property", "propertyId", propertyId));
 
-    Interest interest = new Interest();
-    interest.setProperty(property);
-    interest.setBuyer(buyer);
-    interest.setTimestamp(Instant.now());
+        String username = authenticationFacade.getAuthenticatedUsername();
 
-    Interest savedInterest = interestRepository.save(interest);
-    return modelMapper.map(savedInterest, InterestResponseDTO.class);
-  }
+        // Fetch the buyer (user) entity
+        User buyer = userRepository.findByEmail(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", username));
 
-  public List<InterestResponseDTO> getInterestsByProperty(Long propertyId) {
-    Property property = propertyRepository.findById(propertyId)
-            .orElseThrow(() -> new ResourceNotFoundException("Property", "propertyId", propertyId));
+        Interest interest = new Interest();
+        interest.setProperty(property);
+        interest.setBuyer(buyer);
+        interest.setTimestamp(Instant.now());
 
-    List<Interest> interests = interestRepository.findByProperty(property);
-    return interests.stream().map(interest -> modelMapper.map(interest, InterestResponseDTO.class)).collect(Collectors.toList());
-  }
+        Interest savedInterest = interestRepository.save(interest);
 
-  public List<InterestResponseDTO> getInterestsByBuyer(Long buyerId) {
-    User buyer = userRepository.findById(buyerId)
-            .orElseThrow(() -> new ResourceNotFoundException("User", "userId", buyerId));
-
-    List<Interest> interests = interestRepository.findByBuyer(buyer);
-    return interests.stream().map(interest -> modelMapper.map(interest, InterestResponseDTO.class)).collect(Collectors.toList());
-  }
-
-  public void deleteInterest(Long interestId) {
-    Interest interest = interestRepository.findById(interestId)
-            .orElseThrow(() -> new ResourceNotFoundException("Interest", "interestId", interestId));
-    interestRepository.delete(interest);
-  }
+        InterestResponseDTO response = modelMapper.map(savedInterest, InterestResponseDTO.class);
+        response.setOwnerName(property.getOwner().getFirstName() + " " + property.getOwner().getLastName());
+        response.setOwnerEmail(property.getOwner().getEmail());
+        response.setOwnerPhone(property.getOwner().getPhoneNumber());
+        return response;
+    }
 }

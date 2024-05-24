@@ -9,6 +9,7 @@ public class InterestResponseDTO {
   private Long id;
   private Long propertyId;
   private Long buyerId;
-  private String buyerEmail;
-  private String propertyPlace;
+  private String ownerName;
+  private String ownerEmail;
+  private String ownerPhone;
 }

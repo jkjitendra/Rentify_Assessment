@@ -3,24 +3,29 @@ package com.presidio.rentify.service.impl;
 import com.presidio.rentify.dto.UserDTO.PasswordUpdateDTO;
 import com.presidio.rentify.dto.UserDTO.UserRequestDTO;
 import com.presidio.rentify.dto.UserDTO.UserResponseDTO;
+import com.presidio.rentify.dto.UserDTO.UserResponseWithTokenDTO;
 import com.presidio.rentify.entity.PasswordResetToken;
 import com.presidio.rentify.entity.User;
-import com.presidio.rentify.exception.ResourceNotFoundException;
+import com.presidio.rentify.exception.*;
 import com.presidio.rentify.repository.PasswordResetTokenRepository;
 import com.presidio.rentify.repository.UserRepository;
 import com.presidio.rentify.service.UserService;
+import com.presidio.rentify.util.JwtUtil;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class UserServiceImpl implements UserService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -37,12 +42,20 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @Override
     public UserResponseDTO registerUser(UserRequestDTO userRequestDTO) {
-        User user = modelMapper.map(userRequestDTO, User.class);
-        user.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
-        User savedUser = userRepository.save(user);
-        return modelMapper.map(savedUser, UserResponseDTO.class);
+        Optional<User> userOptional = userRepository.findByEmail(userRequestDTO.getEmail());
+        if (userOptional.isEmpty()) {
+            User user = modelMapper.map(userRequestDTO, User.class);
+            user.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
+            User savedUser = userRepository.save(user);
+            return modelMapper.map(savedUser, UserResponseDTO.class);
+        } else {
+            throw new UserAlreadyExistingException("User", "email", userRequestDTO.getEmail());
+        }
     }
 
     @Override
@@ -64,15 +77,22 @@ public class UserServiceImpl implements UserService {
         }).orElseThrow(() -> new ResourceNotFoundException("User", "userId", id));
     }
 
-    public UserResponseDTO updatePassword(Long id, PasswordUpdateDTO passwordUpdateDTO) {
+    public UserResponseWithTokenDTO updatePassword(Long id, PasswordUpdateDTO passwordUpdateDTO) {
         return userRepository.findById(id).map(user -> {
             if (!passwordEncoder.matches(passwordUpdateDTO.getOldPassword(), user.getPassword())) {
-                throw new RuntimeException("Old password does not match");
+                throw new PasswordNotMatchException("User", "oldPassword", passwordUpdateDTO.getOldPassword());
             }
             user.setPassword(passwordEncoder.encode(passwordUpdateDTO.getNewPassword()));
             User updatedUser = userRepository.save(user);
-            return modelMapper.map(updatedUser, UserResponseDTO.class);
+
+            // Generate new JWT token
+            String newToken = jwtUtil.generateToken(updatedUser.getEmail());
+
+            // Map updated user to UserResponseDTO and create UserResponseWithTokenDTO
+            UserResponseDTO userResponseDTO = modelMapper.map(updatedUser, UserResponseDTO.class);
+            return new UserResponseWithTokenDTO(userResponseDTO, newToken);
         }).orElseThrow(() -> new ResourceNotFoundException("User", "userId", id));
+
     }
 
     public void deleteUser(Long id) {
@@ -83,6 +103,7 @@ public class UserServiceImpl implements UserService {
     }
 
     public void forgotPassword(String email) {
+        logger.debug("Attempting to find user with email: {}", email);
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
         String resetToken = UUID.randomUUID().toString();
         PasswordResetToken token = new PasswordResetToken();
@@ -100,12 +121,11 @@ public class UserServiceImpl implements UserService {
 
     public void resetPassword(String resetToken, String newPassword) {
         PasswordResetToken token = passwordResetTokenRepository.findByToken(resetToken)
-                .orElseThrow(() -> new RuntimeException("Invalid reset token"));
+                .orElseThrow(() -> new InvalidTokenException(resetToken, "Invalid reset token"));
 
         if (token.getExpiryDate().isBefore(Instant.now())) {
-            throw new RuntimeException("Reset token has expired");
+            throw new TokenExpiredException(resetToken, token.getExpiryDate().toString());
         }
-
         User user = token.getUser();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);

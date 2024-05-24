@@ -38,4 +38,29 @@ public class GlobalExceptionHandler {
         APIResponse<String> apiResponse = new APIResponse<>(false, ex.getMessage());
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(PasswordNotMatchException.class)
+    public ResponseEntity<APIResponse<String>> handlePasswordNotMatchException(PasswordNotMatchException ex) {
+        APIResponse<String> apiResponse = new APIResponse<>(false, ex.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(UserAlreadyExistingException.class)
+    public ResponseEntity<APIResponse<String>> handleUserAlreadyExistingException(UserAlreadyExistingException ex) {
+        APIResponse<String> apiResponse = new APIResponse<>(false, ex.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<APIResponse<String>> handleInvalidTokenException(InvalidTokenException ex) {
+        APIResponse<String> apiResponse = new APIResponse<>(false, ex.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<APIResponse<String>> handleTokenExpiredException(TokenExpiredException ex) {
+        APIResponse<String> apiResponse = new APIResponse<>(false, ex.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.UNAUTHORIZED);
+    }
+
 }

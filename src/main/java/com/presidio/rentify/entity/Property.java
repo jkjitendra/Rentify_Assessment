@@ -26,6 +26,10 @@ public class Property {
     private int numberOfBathrooms;
     private String hospitalsNearby;
     private String collegesNearby;
+    private String shoppingMallsNearby;
+    private String publicTransportNearby;
+    private double price;
+    private String description;
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
@@ -34,16 +38,4 @@ public class Property {
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Interest> interests;
 
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//        Property property = (Property) o;
-//        return Objects.equals(id, property.id);
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return Objects.hash(id);
-//    }
 }

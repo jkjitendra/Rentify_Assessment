@@ -7,11 +7,5 @@ import java.util.List;
 
 public interface InterestService {
 
-  InterestResponseDTO addInterest(InterestRequestDTO interestRequestDTO);
-
-  List<InterestResponseDTO> getInterestsByProperty(Long propertyId);
-
-  List<InterestResponseDTO> getInterestsByBuyer(Long buyerId);
-
-  void deleteInterest(Long interestId);
+  InterestResponseDTO expressInterest(Long propertyId);
 }

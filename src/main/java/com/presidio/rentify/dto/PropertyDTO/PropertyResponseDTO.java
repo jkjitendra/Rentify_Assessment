@@ -13,5 +13,11 @@ public class PropertyResponseDTO {
   private int numberOfBathrooms;
   private String hospitalsNearby;
   private String collegesNearby;
+  private String schoolsNearby;
+  private String shoppingMallsNearby;
+  private String publicTransportNearby;
+  private double price;
+  private String description;
   private Long ownerId;
+  private long likes;
 }

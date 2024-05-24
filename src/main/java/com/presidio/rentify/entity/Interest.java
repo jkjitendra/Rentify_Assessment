@@ -30,17 +30,5 @@ public class Interest {
     private User buyer;
 
     private Instant timestamp;
-//
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//        Interest interest = (Interest) o;
-//        return Objects.equals(id, interest.id);
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return Objects.hash(id);
-//    }
+
 }

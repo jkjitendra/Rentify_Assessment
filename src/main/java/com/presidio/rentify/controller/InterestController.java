@@ -6,6 +6,7 @@ import com.presidio.rentify.dto.InterestDTO.InterestResponseDTO;
 import com.presidio.rentify.service.InterestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,31 +15,13 @@ import java.util.List;
 @RequestMapping("/api/v1/interests")
 public class InterestController {
 
-  @Autowired
-  private InterestService interestService;
+    @Autowired
+    private InterestService interestService;
 
-  @PostMapping
-  public ResponseEntity<InterestResponseDTO> addInterest(@RequestBody InterestRequestDTO interestRequestDTO) {
-    InterestResponseDTO interest = interestService.addInterest(interestRequestDTO);
-    return ResponseEntity.ok(interest);
-  }
-
-  @GetMapping("/property/{propertyId}")
-  public ResponseEntity<List<InterestResponseDTO>> getInterestsByProperty(@PathVariable Long propertyId) {
-    List<InterestResponseDTO> interests = interestService.getInterestsByProperty(propertyId);
-    return ResponseEntity.ok(interests);
-  }
-
-  @GetMapping("/buyer/{buyerId}")
-  public ResponseEntity<List<InterestResponseDTO>> getInterestsByBuyer(@PathVariable Long buyerId) {
-    List<InterestResponseDTO> interests = interestService.getInterestsByBuyer(buyerId);
-    return ResponseEntity.ok(interests);
-  }
-
-  @DeleteMapping("/{interestId}")
-  public ResponseEntity<Void> deleteInterest(@PathVariable Long interestId) {
-    interestService.deleteInterest(interestId);
-    return ResponseEntity.noContent().build();
-  }
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping
+    public ResponseEntity<InterestResponseDTO> expressInterest(@RequestParam Long propertyId) {
+        InterestResponseDTO interest = interestService.expressInterest(propertyId);
+        return ResponseEntity.ok(interest);
+    }
 }
-

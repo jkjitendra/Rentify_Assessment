@@ -45,19 +45,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-//          .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-          .csrf(AbstractHttpConfigurer::disable)
-          .authorizeHttpRequests(authorizeRequests ->
-            authorizeRequests
-              .requestMatchers("/api/v1/auth/login", "/api/v1/auth/register", "/h2-console/**").permitAll()
-              .anyRequest().authenticated()
-          )
-          .headers(headers -> headers
-                  .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-          )
-          .csrf(csrf -> csrf.ignoringRequestMatchers(toH2Console()).disable())
-          .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
-          .logout(LogoutConfigurer::permitAll);
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorizeRequests ->
+                        authorizeRequests
+                                .requestMatchers(
+                                        "/api/v1/auth/**",
+                                        "/h2-console/**"
+                                ).permitAll()
+                                .requestMatchers("/api/v1/properties/user/**").hasRole("SELLER")
+                                .requestMatchers("/api/v1/properties/owner/**").hasRole("SELLER")
+                                .requestMatchers("/api/v1/properties/**").hasRole("SELLER")
+                                .anyRequest().authenticated()
+                )
+                .headers(headers -> headers
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+                )
+                .csrf(csrf -> csrf.ignoringRequestMatchers(toH2Console()).disable())
+                .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
+                .logout(LogoutConfigurer::permitAll);
 
         // Add JWT token filter
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
@@ -96,4 +101,3 @@ public class SecurityConfig {
 //      return new CorsFilter(corsConfigurationSource());
 //    }
 }
-
