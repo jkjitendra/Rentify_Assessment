@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UserResponseWithTokenDTO extends UserResponseDTO {
-    private String token;
+    private String accessToken;
 
     public UserResponseWithTokenDTO(UserResponseDTO userResponseDTO, String token) {
         super.setId(userResponseDTO.getId());
@@ -16,6 +16,6 @@ public class UserResponseWithTokenDTO extends UserResponseDTO {
         super.setEmail(userResponseDTO.getEmail());
         super.setPhoneNumber(userResponseDTO.getPhoneNumber());
         super.setRole(userResponseDTO.getRole());
-        this.token = token;
+        this.accessToken = token;
     }
 }

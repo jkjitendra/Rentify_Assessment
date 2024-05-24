@@ -10,6 +10,7 @@ import com.presidio.rentify.util.JwtUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -39,27 +40,28 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/register")
-    public APIResponse<UserResponseDTO> registerUser(@RequestBody UserRequestDTO userRequestDTO) {
+    public ResponseEntity<APIResponse<UserResponseDTO>> registerUser(@RequestBody UserRequestDTO userRequestDTO) {
         UserResponseDTO userResponse = userService.registerUser(userRequestDTO);
-        return new APIResponse<>(true, "User registered successfully", userResponse);
+        return ResponseEntity.ok(new APIResponse<>(true, "User registered successfully", userResponse));
     }
 
     @PostMapping("/login")
-    public APIResponse<AuthResponse> login(@RequestBody AuthRequest authRequest) throws Exception {
+    public ResponseEntity<APIResponse<AuthResponse>> login(@RequestBody AuthRequest authRequest) throws Exception {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
             );
             logger.info("Received authentication successful {}", authentication.getPrincipal());
         } catch (Exception e) {
-            return new APIResponse<>(false, "Invalid credentials", null, e.getMessage());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new APIResponse<>(false, "Invalid credentials", null, e.getMessage()));
         }
         logger.info("going to load by username");
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getEmail());
         logger.info("going to generate token {}", userDetails.toString());
         final String jwt = jwtUtil.generateToken(userDetails.getUsername());
         logger.info("generated token being sent  {}", jwt);
-        return new APIResponse<>(true, "Login successful", new AuthResponse(jwt));
+        return ResponseEntity.ok(new APIResponse<>(true, "Login successful", new AuthResponse(jwt)));
     }
 
     @PostMapping("/forgot-password")
