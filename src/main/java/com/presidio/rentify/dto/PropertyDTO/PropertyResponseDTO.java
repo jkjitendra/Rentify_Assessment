@@ -6,18 +6,33 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PropertyResponseDTO {
-  private Long id;
-  private String place;
-  private double area;
-  private int numberOfBedrooms;
-  private int numberOfBathrooms;
-  private String hospitalsNearby;
-  private String collegesNearby;
-  private String schoolsNearby;
-  private String shoppingMallsNearby;
-  private String publicTransportNearby;
-  private double price;
-  private String description;
-  private Long ownerId;
-  private long likes;
+
+    private Long id;
+
+    private String place;
+
+    private double area;
+
+    private int numberOfBedrooms;
+
+    private int numberOfBathrooms;
+
+    private int numberOfHospitalsNearby;
+
+    private int numberOfCollegesNearby;
+
+    private int numberOfSchoolsNearby;
+
+    private int numberOfShoppingMallsNearby;
+
+    private int numberOfPublicTransportNearby;
+
+    private double price;
+
+    private String description;
+
+    private Long ownerId;
+
+    private long likes;
+
 }

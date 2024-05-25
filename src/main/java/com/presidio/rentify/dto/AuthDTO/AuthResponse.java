@@ -1,14 +1,16 @@
 package com.presidio.rentify.dto.AuthDTO;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AuthResponse {
+
   private String accessToken;
 
-  public AuthResponse(String accessToken) {
-    this.accessToken = accessToken;
-  }
+  private String refreshToken;
+
 }

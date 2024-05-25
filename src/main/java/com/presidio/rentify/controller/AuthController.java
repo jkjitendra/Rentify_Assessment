@@ -3,20 +3,24 @@ package com.presidio.rentify.controller;
 import com.presidio.rentify.dto.APIResponse;
 import com.presidio.rentify.dto.AuthDTO.AuthRequest;
 import com.presidio.rentify.dto.AuthDTO.AuthResponse;
+import com.presidio.rentify.dto.AuthDTO.RefreshTokenRequest;
 import com.presidio.rentify.dto.UserDTO.UserRequestDTO;
 import com.presidio.rentify.dto.UserDTO.UserResponseDTO;
-import com.presidio.rentify.service.UserService;
+import com.presidio.rentify.entity.RefreshToken;
+import com.presidio.rentify.entity.User;
+import com.presidio.rentify.service.AuthService;
+import com.presidio.rentify.service.RefreshTokenService;
 import com.presidio.rentify.util.JwtUtil;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -30,23 +34,26 @@ public class AuthController {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+//    @Autowired
+//    private UserDetailsService userDetailsService;
+
     @Autowired
-    private UserDetailsService userDetailsService;
+    private AuthService authService;
+
+    @Autowired
+    private RefreshTokenService refreshTokenService;
 
     @Autowired
     private JwtUtil jwtUtil;
 
-    @Autowired
-    private UserService userService;
-
     @PostMapping("/register")
-    public ResponseEntity<APIResponse<UserResponseDTO>> registerUser(@RequestBody UserRequestDTO userRequestDTO) {
-        UserResponseDTO userResponse = userService.registerUser(userRequestDTO);
+    public ResponseEntity<APIResponse<UserResponseDTO>> registerUser(@Valid @RequestBody UserRequestDTO userRequestDTO) {
+        UserResponseDTO userResponse = authService.registerUser(userRequestDTO);
         return ResponseEntity.ok(new APIResponse<>(true, "User registered successfully", userResponse));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<APIResponse<AuthResponse>> login(@RequestBody AuthRequest authRequest) throws Exception {
+    public ResponseEntity<APIResponse<AuthResponse>> login(@Valid @RequestBody AuthRequest authRequest) throws Exception {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
@@ -56,25 +63,33 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new APIResponse<>(false, "Invalid credentials", null, e.getMessage()));
         }
-        logger.info("going to load by username");
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getEmail());
-        logger.info("going to generate token {}", userDetails.toString());
-        final String jwt = jwtUtil.generateToken(userDetails.getUsername());
-        logger.info("generated token being sent  {}", jwt);
-        return ResponseEntity.ok(new APIResponse<>(true, "Login successful", new AuthResponse(jwt)));
+//        final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getEmail());
+        AuthResponse authResponse = authService.login(authRequest);
+        return ResponseEntity.ok(new APIResponse<>(true, "Login successful", authResponse));
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/refresh")
+    public ResponseEntity<APIResponse<AuthResponse>> createRefreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
+        RefreshToken refreshToken = refreshTokenService.verifyRefreshToken(refreshTokenRequest.getRefreshToken());
+
+        User user = refreshToken.getUser();
+        String accessToken = jwtUtil.generateToken(user);
+        AuthResponse authResponse = AuthResponse.builder().accessToken(accessToken).refreshToken(refreshToken.getRefreshToken()).build();
+        return ResponseEntity.ok(new APIResponse<>(true, "Login successful", authResponse));
     }
 
     @PostMapping("/forgot-password")
     public ResponseEntity<APIResponse<String>> forgotPassword(@RequestBody Map<String, String> request) {
         String email = request.get("email");
         logger.debug("Received forgot password request for email: {}", email);
-        userService.forgotPassword(email);
+        authService.forgotPassword(email);
         return ResponseEntity.ok(new APIResponse<>(true, "Password reset instructions have been sent to your email"));
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<APIResponse<String>> resetPassword(@RequestParam String resetToken, @RequestBody String newPassword) {
-        userService.resetPassword(resetToken, newPassword);
+        authService.resetPassword(resetToken, newPassword);
         return ResponseEntity.ok(new APIResponse<>(true, "Password has been reset successfully"));
     }
 

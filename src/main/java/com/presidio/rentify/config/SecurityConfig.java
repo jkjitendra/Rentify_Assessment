@@ -16,6 +16,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractAu
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,7 +31,7 @@ import static org.springframework.boot.autoconfigure.security.servlet.PathReques
 public class SecurityConfig {
 
     @Autowired
-    private JwtRequestFilter jwtRequestFilter;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public UserDetailsService userDetailsService() {
@@ -45,36 +46,36 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(authorizeRequests ->
-                        authorizeRequests
-                                .requestMatchers(
-                                        "/api/v1/auth/**",
-                                        "/h2-console/**"
-                                ).permitAll()
-                                .requestMatchers("/api/v1/properties/user/**").hasRole("SELLER")
-                                .requestMatchers("/api/v1/properties/owner/**").hasRole("SELLER")
-                                .requestMatchers("/api/v1/properties/**").hasRole("SELLER")
-                                .anyRequest().authenticated()
-                )
-                .headers(headers -> headers
-                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
-                )
-                .csrf(csrf -> csrf.ignoringRequestMatchers(toH2Console()).disable())
-                .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
-                .logout(LogoutConfigurer::permitAll);
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(authorizeRequests ->
+                authorizeRequests
+                    .requestMatchers("/api/v1/auth/**", "/h2-console/**").permitAll()
+//                    .requestMatchers("/api/v1/properties/user/**").hasRole("SELLER, BUYER, ADMIN")
+//                    .requestMatchers("/api/v1/properties/owner/**").hasRole("SELLER")
+//                    .requestMatchers("/api/v1/properties/**").hasRole("SELLER")
+                    .anyRequest().authenticated()
+            )
+            .headers(headers -> headers
+                    .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+            )
+            .csrf(csrf -> csrf.ignoringRequestMatchers(toH2Console()).disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+//            .formLogin(AbstractAuthenticationFilterConfigurer::permitAll)
+            .logout(LogoutConfigurer::permitAll);
 
         // Add JWT token filter
-        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+        http
+        .authenticationProvider(authenticationProvider())
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
-        authenticationProvider.setUserDetailsService(userDetailsService);
-        authenticationProvider.setPasswordEncoder(passwordEncoder);
+        authenticationProvider.setUserDetailsService(userDetailsService());
+        authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
     }
 

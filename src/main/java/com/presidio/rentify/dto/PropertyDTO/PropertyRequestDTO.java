@@ -1,5 +1,6 @@
 package com.presidio.rentify.dto.PropertyDTO;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,15 +11,33 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PropertyRequestDTO {
-  private String place;
-  private double area;
-  private int numberOfBedrooms;
-  private int numberOfBathrooms;
-  private String hospitalsNearby;
-  private String collegesNearby;
-  private String schoolsNearby;
-  private String shoppingMallsNearby;
-  private String publicTransportNearby;
-  private double price;
-  private String description;
+
+    @NotBlank
+    private String place;
+
+    @NotBlank
+    private double area;
+
+    @NotBlank
+    private int numberOfBedrooms;
+
+    @NotBlank
+    private int numberOfBathrooms;
+
+    @NotBlank
+    private double price;
+
+    @NotBlank
+    private String description;
+
+    private int numberOfHospitalsNearby;
+
+    private int numberOfSchoolsNearby;
+
+    private int numberOfCollegesNearby;
+
+    private int numberOfShoppingMallsNearby;
+
+    private int numberOfPublicTransportNearby;
+
 }

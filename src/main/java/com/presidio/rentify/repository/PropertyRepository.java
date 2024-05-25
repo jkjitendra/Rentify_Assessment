@@ -16,16 +16,24 @@ public interface PropertyRepository extends JpaRepository<Property, Long> {
     @Query("SELECT p FROM Property p WHERE " +
             "(:place IS NULL OR p.place LIKE %:place%) AND " +
             "(:area IS NULL OR p.area = :area) AND " +
+            "(:price IS NULL OR p.price = :price) AND " +
             "(:numberOfBedrooms IS NULL OR p.numberOfBedrooms = :numberOfBedrooms) AND " +
             "(:numberOfBathrooms IS NULL OR p.numberOfBathrooms = :numberOfBathrooms) AND " +
-            "(:hospitalsNearby IS NULL OR p.hospitalsNearby LIKE %:hospitalsNearby%) AND " +
-            "(:collegesNearby IS NULL OR p.collegesNearby LIKE %:collegesNearby%)")
+            "(:numberOfHospitalsNearby IS NULL OR p.numberOfHospitalsNearby = :numberOfHospitalsNearby) AND " +
+            "(:numberOfSchoolsNearby IS NULL OR p.numberOfSchoolsNearby = :numberOfSchoolsNearby) AND " +
+            "(:numberOfCollegesNearby IS NULL OR p.numberOfCollegesNearby = :numberOfCollegesNearby) AND " +
+            "(:numberOfShoppingMallsNearby IS NULL OR p.numberOfShoppingMallsNearby = :numberOfShoppingMallsNearby) AND " +
+            "(:numberOfPublicTransportsNearby IS NULL OR p.numberOfPublicTransportsNearby = :numberOfPublicTransportsNearby)")
     Page<Property> findAllWithFilters(
             @Param("place") String place,
             @Param("area") Double area,
+            @Param("price") Double price,
             @Param("numberOfBedrooms") Integer numberOfBedrooms,
             @Param("numberOfBathrooms") Integer numberOfBathrooms,
-            @Param("hospitalsNearby") String hospitalsNearby,
-            @Param("collegesNearby") String collegesNearby,
+            @Param("numberOfHospitalsNearby") Integer numberOfHospitalsNearby,
+            @Param("numberOfSchoolsNearby") Integer numberOfSchoolsNearby,
+            @Param("numberOfCollegesNearby") Integer numberOfCollegesNearby,
+            @Param("numberOfShoppingMallsNearby") Integer numberOfShoppingMallsNearby,
+            @Param("numberOfPublicTransportsNearby") Integer numberOfPublicTransportsNearby,
             Pageable pageable);
 }

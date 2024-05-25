@@ -1,6 +1,8 @@
 package com.presidio.rentify.controller;
 
 
+import com.presidio.rentify.constants.AppConstants;
+import com.presidio.rentify.dto.PageableResponse;
 import com.presidio.rentify.dto.PropertyDTO.PropertyRequestDTO;
 import com.presidio.rentify.dto.PropertyDTO.PropertyResponseDTO;
 import com.presidio.rentify.service.PropertyService;
@@ -30,18 +32,21 @@ public class PropertyController {
 
     @PreAuthorize("hasRole('SELLER')")
     @GetMapping("/owner/{ownerId}")
-    public ResponseEntity<Page<PropertyResponseDTO>> getPropertiesByOwner(@RequestParam(defaultValue = "0") int pageNo,
-                                                                          @RequestParam(defaultValue = "10") int pageSize,
-                                                                          @PathVariable Long ownerId) {
-        Page<PropertyResponseDTO> properties = propertyService.getPropertiesByOwner(pageNo, pageSize, ownerId);
+    public ResponseEntity<PageableResponse<PropertyResponseDTO>> getPropertiesByOwner(
+                                                                        @RequestParam(value = "pageNo", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNo,
+                                                                        @RequestParam(value = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+                                                                        @PathVariable Long ownerId) {
+        PageableResponse<PropertyResponseDTO> properties = propertyService.getPropertiesByOwner(pageNo, pageSize, ownerId);
         return ResponseEntity.ok(properties);
     }
 
+    @PreAuthorize("hasRole('BUYER')")
     @GetMapping
-    public ResponseEntity<Page<PropertyResponseDTO>> getAllProperties(@RequestParam(defaultValue = "0") int pageNo,
-                                                                      @RequestParam(defaultValue = "10") int pageSize,
-                                                                      @RequestParam Map<String, String> filters) {
-        Page<PropertyResponseDTO> properties = propertyService.getAllProperties(pageNo, pageSize, filters);
+    public ResponseEntity<PageableResponse<PropertyResponseDTO>> getAllProperties(
+                                                                        @RequestParam(value = "pageNo", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNo,
+                                                                        @RequestParam(value = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+                                                                        @RequestParam Map<String, String> filters) {
+        PageableResponse<PropertyResponseDTO> properties = propertyService.getAllProperties(pageNo, pageSize, filters);
         return ResponseEntity.ok(properties);
     }
 

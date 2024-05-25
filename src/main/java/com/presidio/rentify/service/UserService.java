@@ -9,10 +9,6 @@ import java.util.Optional;
 
 public interface UserService {
 
-    UserResponseDTO registerUser(UserRequestDTO userRequestDTO);
-
-    Optional<UserResponseDTO> findUserByEmail(String email);
-
     Optional<UserResponseDTO> findUserById(Long id);
 
     UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO);
@@ -20,9 +16,5 @@ public interface UserService {
     UserResponseWithTokenDTO updatePassword(Long id, PasswordUpdateDTO passwordUpdateDTO);
 
     void deleteUser(Long id);
-
-    void forgotPassword(String email);
-
-    void resetPassword(String resetToken, String newPassword);
 
 }

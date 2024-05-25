@@ -1,6 +1,7 @@
 package com.presidio.rentify.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,16 +21,40 @@ public class Property {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    @NotBlank
     private String place;
-    private double area;
-    private int numberOfBedrooms;
-    private int numberOfBathrooms;
-    private String hospitalsNearby;
-    private String collegesNearby;
-    private String shoppingMallsNearby;
-    private String publicTransportNearby;
-    private double price;
+
+    @Column(nullable = false)
+    @NotBlank
+    private Double area;
+
+    @Column(nullable = false)
+    @NotBlank
+    private Integer numberOfBedrooms;
+
+    @Column(nullable = false)
+    @NotBlank
+    private Integer numberOfBathrooms;
+
+    @Column(nullable = false)
+    @NotBlank
+    private Double price;
+
+    @Column(nullable = false)
+    @NotBlank
     private String description;
+
+    private Integer numberOfHospitalsNearby;
+
+    private Integer numberOfSchoolsNearby;
+
+    private Integer numberOfCollegesNearby;
+
+    private Integer numberOfShoppingMallsNearby;
+
+    private Integer numberOfPublicTransportsNearby;
+
 
     @ManyToOne
     @JoinColumn(name = "owner_id")

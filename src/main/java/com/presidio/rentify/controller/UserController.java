@@ -7,6 +7,7 @@ import com.presidio.rentify.dto.UserDTO.UserResponseDTO;
 import com.presidio.rentify.dto.UserDTO.UserResponseWithTokenDTO;
 import com.presidio.rentify.service.UserService;
 import com.presidio.rentify.service.impl.UserServiceImpl;
+import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,13 +38,13 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<APIResponse<UserResponseDTO>> updateUserDetails(@PathVariable Long id, @RequestBody UserRequestDTO userRequestDTO) {
+    public ResponseEntity<APIResponse<UserResponseDTO>> updateUserDetails(@PathVariable Long id, @Valid @RequestBody UserRequestDTO userRequestDTO) {
         UserResponseDTO updatedUser = userService.updateUser(id, userRequestDTO);
         return ResponseEntity.ok(new APIResponse<>(true, "User updated successfully", updatedUser));
     }
 
     @PutMapping("/{id}/update-password")
-    public ResponseEntity<APIResponse<UserResponseWithTokenDTO>> updatePassword(@PathVariable Long id, @RequestBody PasswordUpdateDTO passwordUpdateDTO) {
+    public ResponseEntity<APIResponse<UserResponseWithTokenDTO>> updatePassword(@PathVariable Long id, @Valid @RequestBody PasswordUpdateDTO passwordUpdateDTO) {
         UserResponseWithTokenDTO userResponseDTO = userService.updatePassword(id, passwordUpdateDTO);
         return ResponseEntity.ok(new APIResponse<>(true, "Password updated successfully", userResponseDTO));
     }

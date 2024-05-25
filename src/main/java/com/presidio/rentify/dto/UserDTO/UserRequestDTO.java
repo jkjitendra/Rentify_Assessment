@@ -32,6 +32,6 @@ public class UserRequestDTO {
   @Pattern(regexp = "^\\+?[1-9][0-9]{7,14}$", message = "Invalid Mobile Number Format")
   private String phoneNumber;
 
-  @Pattern(regexp = "", message = "role can be either SELLER or BUYER")
+  @Pattern(regexp = "^(SELLER|BUYER)$", message = "role can be either SELLER, BUYER")
   private String role;  // Role can be "SELLER" or "BUYER"
 }

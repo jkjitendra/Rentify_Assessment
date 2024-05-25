@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -42,6 +43,7 @@ public class InterestServiceImpl implements InterestService {
     private AuthenticationFacade authenticationFacade;
 
     @Override
+    @Transactional
     public InterestResponseDTO expressInterest(Long propertyId) {
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Property", "propertyId", propertyId));

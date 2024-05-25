@@ -1,5 +1,6 @@
 package com.presidio.rentify.service;
 
+import com.presidio.rentify.dto.PageableResponse;
 import com.presidio.rentify.dto.PropertyDTO.PropertyRequestDTO;
 import com.presidio.rentify.dto.PropertyDTO.PropertyResponseDTO;
 import org.springframework.data.domain.Page;
@@ -10,15 +11,15 @@ import java.util.Map;
 
 public interface PropertyService {
 
-  PropertyResponseDTO addProperty(Long userId, PropertyRequestDTO propertyRequestDTO);
+    PropertyResponseDTO addProperty(Long userId, PropertyRequestDTO propertyRequestDTO);
 
-  Page<PropertyResponseDTO> getPropertiesByOwner(Integer pageNo, Integer pageSize, Long ownerId);
+    PageableResponse<PropertyResponseDTO> getPropertiesByOwner(Integer pageNo, Integer pageSize, Long ownerId);
 
-  Page<PropertyResponseDTO> getAllProperties(Integer pageNo, Integer pageSize, Map<String, String> filters);
+    PageableResponse<PropertyResponseDTO> getAllProperties(Integer pageNo, Integer pageSize, Map<String, String> filters);
 
-  PropertyResponseDTO updateProperty(Long propertyId, PropertyRequestDTO propertyRequestDTO);
+    PropertyResponseDTO updateProperty(Long propertyId, PropertyRequestDTO propertyRequestDTO);
 
-  void deleteProperty(Long propertyId);
+    void deleteProperty(Long propertyId);
 
-  PropertyResponseDTO likeProperty(Long propertyId);
+    PropertyResponseDTO likeProperty(Long propertyId);
 }

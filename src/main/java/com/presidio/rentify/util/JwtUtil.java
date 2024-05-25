@@ -12,16 +12,17 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
 @Component
 public class JwtUtil {
 
-    @Value("${jwt.secret}")
+    @Value("${secret.jwt.secret-key}")
     private String secret;
 
-    @Value("${jwt.expiration}")
+    @Value("${secret.jwt.expiration-time}")
     private long expiration;
 
     private Key getSignKey() {
@@ -29,17 +30,19 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String userName) {
-        Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, userName);
+    public String generateToken(UserDetails userDetails) {
+        return createToken(new HashMap<>(), userDetails);
     }
-    private String createToken(Map<String, Object> claims, String userName) {
+
+    private String createToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        extraClaims.put("roles", userDetails.getAuthorities());
         return Jwts.builder()
-                .setClaims(claims)
-                .setSubject(userName)
+                .setClaims(extraClaims)
+                .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
-                .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
+                .signWith(getSignKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
