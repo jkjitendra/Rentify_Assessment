@@ -30,14 +30,18 @@ public class PropertyController {
 
     @PreAuthorize("hasRole('SELLER')")
     @GetMapping("/owner/{ownerId}")
-    public ResponseEntity<Page<PropertyResponseDTO>> getPropertiesByOwner(@PathVariable Long ownerId, Pageable pageable) {
-        Page<PropertyResponseDTO> properties = propertyService.getPropertiesByOwner(ownerId, pageable);
+    public ResponseEntity<Page<PropertyResponseDTO>> getPropertiesByOwner(@RequestParam(defaultValue = "0") int pageNo,
+                                                                          @RequestParam(defaultValue = "10") int pageSize,
+                                                                          @PathVariable Long ownerId) {
+        Page<PropertyResponseDTO> properties = propertyService.getPropertiesByOwner(pageNo, pageSize, ownerId);
         return ResponseEntity.ok(properties);
     }
 
     @GetMapping
-    public ResponseEntity<Page<PropertyResponseDTO>> getAllProperties(Pageable pageable, @RequestParam Map<String, String> filters) {
-        Page<PropertyResponseDTO> properties = propertyService.getAllProperties(pageable, filters);
+    public ResponseEntity<Page<PropertyResponseDTO>> getAllProperties(@RequestParam(defaultValue = "0") int pageNo,
+                                                                      @RequestParam(defaultValue = "10") int pageSize,
+                                                                      @RequestParam Map<String, String> filters) {
+        Page<PropertyResponseDTO> properties = propertyService.getAllProperties(pageNo, pageSize, filters);
         return ResponseEntity.ok(properties);
     }
 

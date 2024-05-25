@@ -15,6 +15,7 @@ import com.presidio.rentify.service.PropertyService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
@@ -58,7 +59,8 @@ public class PropertyServiceImpl implements PropertyService {
     }
 
     @Override
-    public Page<PropertyResponseDTO> getPropertiesByOwner(Long ownerId, Pageable pageable) {
+    public Page<PropertyResponseDTO> getPropertiesByOwner(Integer pageNo, Integer pageSize, Long ownerId) {
+      Pageable pageable = PageRequest.of(pageNo, pageSize);
       User owner = userRepository.findById(ownerId).orElseThrow(() -> new ResourceNotFoundException("User", "userId", ownerId));
       if (!"SELLER".equals(owner.getRole())) {
         throw new AccessDeniedException("Only sellers can view their properties");
@@ -69,7 +71,8 @@ public class PropertyServiceImpl implements PropertyService {
     }
 
     @Override
-    public Page<PropertyResponseDTO> getAllProperties(Pageable pageable, Map<String, String> filters) {
+    public Page<PropertyResponseDTO> getAllProperties(Integer pageNo, Integer pageSize, Map<String, String> filters) {
+      Pageable pageable = PageRequest.of(pageNo, pageSize);
       String place = filters.getOrDefault("place", null);
       Double area = filters.containsKey("area") ? Double.valueOf(filters.get("area")) : null;
       Integer numberOfBedrooms = filters.containsKey("numberOfBedrooms") ? Integer.valueOf(filters.get("numberOfBedrooms")) : null;

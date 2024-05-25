@@ -12,9 +12,9 @@ public interface PropertyService {
 
   PropertyResponseDTO addProperty(Long userId, PropertyRequestDTO propertyRequestDTO);
 
-  Page<PropertyResponseDTO> getPropertiesByOwner(Long ownerId, Pageable pageable);
+  Page<PropertyResponseDTO> getPropertiesByOwner(Integer pageNo, Integer pageSize, Long ownerId);
 
-  Page<PropertyResponseDTO> getAllProperties(Pageable pageable, Map<String, String> filters);
+  Page<PropertyResponseDTO> getAllProperties(Integer pageNo, Integer pageSize, Map<String, String> filters);
 
   PropertyResponseDTO updateProperty(Long propertyId, PropertyRequestDTO propertyRequestDTO);
 

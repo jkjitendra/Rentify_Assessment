@@ -3,6 +3,7 @@ package com.presidio.rentify.exception;
 import com.presidio.rentify.dto.APIResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -68,5 +69,17 @@ public class GlobalExceptionHandler {
     public ResponseEntity<APIResponse<String>> handleNoHandlerFoundException(NoHandlerFoundException ex) {
         APIResponse<String> apiResponse = new APIResponse<>(false, "Endpoint not found: " + ex.getRequestURL());
         return new ResponseEntity<>(apiResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(NullPointerException.class)
+    public ResponseEntity<APIResponse<String>> handleNullPointerException(NullPointerException exception) {
+        APIResponse<String> apiResponse = new APIResponse<>(false, "Null pointer exception occurred", null);
+        return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<APIResponse<String>> handleAccessDeniedException(AccessDeniedException exception) {
+        APIResponse<String> apiResponse = new APIResponse<>(false, "Access denied", null);
+        return new ResponseEntity<>(apiResponse, HttpStatus.FORBIDDEN);
     }
 }
