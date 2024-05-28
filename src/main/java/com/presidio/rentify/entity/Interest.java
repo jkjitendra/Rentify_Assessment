@@ -22,11 +22,11 @@ public class Interest {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "property_id")
+    @JoinColumn(name = "property_id", nullable = false)
     private Property property;
 
     @ManyToOne
-    @JoinColumn(name = "buyer_id")
+    @JoinColumn(name = "buyer_id", nullable = false)
     private User buyer;
 
     private Instant timestamp;

@@ -122,4 +122,10 @@ public class GlobalExceptionHandler {
         APIResponse<String> apiResponse = new APIResponse<>(false, "Null pointer exception occurred", null);
         return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(EmailSendingException.class)
+    public ResponseEntity<APIResponse<String>> handleEmailSendingException(EmailSendingException ex) {
+        APIResponse<String> apiResponse = new APIResponse<>(false, ex.getMessage());
+        return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

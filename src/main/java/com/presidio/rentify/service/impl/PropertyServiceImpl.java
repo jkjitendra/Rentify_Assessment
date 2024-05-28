@@ -71,12 +71,12 @@ public class PropertyServiceImpl implements PropertyService {
         Pageable pageable = PageRequest.of(pageNo, pageSize);
         User owner = userRepository.findById(ownerId).orElseThrow(() -> new ResourceNotFoundException("User", "userId", ownerId));
         if (!SELLER.equals(owner.getRole())) {
-        throw new AccessDeniedException("Only sellers can view their properties");
+            throw new AccessDeniedException("Only sellers can view their properties");
         }
 
         Page<Property> properties = propertyRepository.findByOwner(owner, pageable);
         List<PropertyResponseDTO> propertyResponseDTOList = properties.stream()
-                .map(property -> modelMapper.map(property, PropertyResponseDTO.class))
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
 
         PageableResponse<PropertyResponseDTO> pageableResponse = new PageableResponse<>();
@@ -108,7 +108,7 @@ public class PropertyServiceImpl implements PropertyService {
         Page<Property> properties = propertyRepository.findAllWithFilters(place, area, price, numberOfBedrooms, numberOfBathrooms, numberOfHospitalsNearby,
                 numberOfSchoolsNearBy, numberOfCollegesNearby, numberOfShoppingMallsNearby, numberOfPublicTransportsNearby, pageable);
         List<PropertyResponseDTO> propertyResponseDTOList = properties.stream()
-                .map(property -> modelMapper.map(property, PropertyResponseDTO.class))
+                .map(this::convertToDto)
                 .collect(Collectors.toList());
 
         PageableResponse<PropertyResponseDTO> pageableResponse = new PageableResponse<>();
@@ -175,5 +175,36 @@ public class PropertyServiceImpl implements PropertyService {
         messagingTemplate.convertAndSend("/topic/likes", response);
 
         return response;
+    }
+
+    @Override
+    public boolean isOwner(Long userId, String authenticatedUsername) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        return user.getEmail().equals(authenticatedUsername);
+    }
+
+    @Override
+    public boolean isOwnerByPropertyId(Long propertyId, String authenticatedUsername) {
+        Property property = propertyRepository.findById(propertyId).orElseThrow(() -> new ResourceNotFoundException("Property", "id", propertyId));
+        return property.getOwner().getEmail().equals(authenticatedUsername);
+    }
+
+    private PropertyResponseDTO convertToDto(Property property) {
+        PropertyResponseDTO dto = new PropertyResponseDTO();
+        dto.setId(property.getId());
+        dto.setPlace(property.getPlace());
+        dto.setArea(property.getArea());
+        dto.setNumberOfBedrooms(property.getNumberOfBedrooms());
+        dto.setNumberOfBathrooms(property.getNumberOfBathrooms());
+        dto.setNumberOfHospitalsNearby(property.getNumberOfHospitalsNearby());
+        dto.setNumberOfSchoolsNearby(property.getNumberOfSchoolsNearby());
+        dto.setNumberOfCollegesNearby(property.getNumberOfCollegesNearby());
+        dto.setNumberOfShoppingMallsNearby(property.getNumberOfShoppingMallsNearby());
+        dto.setNumberOfPublicTransportsNearby(property.getNumberOfPublicTransportsNearby());
+        dto.setPrice(property.getPrice());
+        dto.setDescription(property.getDescription());
+        dto.setOwnerId(property.getOwner().getId());
+        dto.setLikes(property.getPropertyLikes().size());
+        return dto;
     }
 }

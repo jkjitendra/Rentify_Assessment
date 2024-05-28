@@ -16,11 +16,16 @@ public class PasswordResetToken {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  private String token;
+  @Column(nullable = false)
+  private Integer otp;
+
+  @Column(nullable = false)
+  private Instant expirationTime;
+
+  private boolean verified;
 
   @OneToOne
-  @JoinColumn(name = "user_id")
+  @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-  private Instant expiryDate;
 }

@@ -25,7 +25,7 @@ public class PropertyResponseDTO {
 
     private int numberOfShoppingMallsNearby;
 
-    private int numberOfPublicTransportNearby;
+    private int numberOfPublicTransportsNearby;
 
     private double price;
 

@@ -1,13 +1,18 @@
 package com.presidio.rentify.controller;
 
 import com.presidio.rentify.dto.APIResponse;
-import com.presidio.rentify.dto.AuthDTO.AuthRequest;
-import com.presidio.rentify.dto.AuthDTO.AuthResponse;
-import com.presidio.rentify.dto.AuthDTO.RefreshTokenRequest;
-import com.presidio.rentify.dto.UserDTO.UserRequestDTO;
+import com.presidio.rentify.dto.AuthDTO.*;
+import com.presidio.rentify.dto.UserDTO.PasswordUpdateDTO;
 import com.presidio.rentify.dto.UserDTO.UserResponseDTO;
+import com.presidio.rentify.entity.PasswordResetToken;
 import com.presidio.rentify.entity.RefreshToken;
 import com.presidio.rentify.entity.User;
+import com.presidio.rentify.exception.InvalidTokenException;
+import com.presidio.rentify.exception.PasswordNotMatchException;
+import com.presidio.rentify.exception.ResourceNotFoundException;
+import com.presidio.rentify.exception.TokenExpiredException;
+import com.presidio.rentify.repository.PasswordResetTokenRepository;
+import com.presidio.rentify.repository.UserRepository;
 import com.presidio.rentify.service.AuthService;
 import com.presidio.rentify.service.RefreshTokenService;
 import com.presidio.rentify.util.JwtUtil;
@@ -17,13 +22,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -33,9 +41,6 @@ public class AuthController {
 
     @Autowired
     private AuthenticationManager authenticationManager;
-
-//    @Autowired
-//    private UserDetailsService userDetailsService;
 
     @Autowired
     private AuthService authService;
@@ -47,8 +52,8 @@ public class AuthController {
     private JwtUtil jwtUtil;
 
     @PostMapping("/register")
-    public ResponseEntity<APIResponse<UserResponseDTO>> registerUser(@Valid @RequestBody UserRequestDTO userRequestDTO) {
-        UserResponseDTO userResponse = authService.registerUser(userRequestDTO);
+    public ResponseEntity<APIResponse<UserResponseDTO>> registerUser(@Valid @RequestBody RegisterRequestBody registerRequestBody) {
+        UserResponseDTO userResponse = authService.registerUser(registerRequestBody);
         return ResponseEntity.ok(new APIResponse<>(true, "User registered successfully", userResponse));
     }
 
@@ -58,7 +63,6 @@ public class AuthController {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(authRequest.getEmail(), authRequest.getPassword())
             );
-            logger.info("Received authentication successful {}", authentication.getPrincipal());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new APIResponse<>(false, "Invalid credentials", null, e.getMessage()));
@@ -68,7 +72,7 @@ public class AuthController {
         return ResponseEntity.ok(new APIResponse<>(true, "Login successful", authResponse));
     }
 
-    @PreAuthorize("isAuthenticated()")
+//    @PreAuthorize("isAuthenticated()")
     @PostMapping("/refresh")
     public ResponseEntity<APIResponse<AuthResponse>> createRefreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
         RefreshToken refreshToken = refreshTokenService.verifyRefreshToken(refreshTokenRequest.getRefreshToken());
@@ -84,13 +88,32 @@ public class AuthController {
         String email = request.get("email");
         logger.debug("Received forgot password request for email: {}", email);
         authService.forgotPassword(email);
-        return ResponseEntity.ok(new APIResponse<>(true, "Password reset instructions have been sent to your email"));
+        return ResponseEntity.ok(new APIResponse<>(true, "Password reset instructions have been sent to your email: " + email));
     }
 
-    @PostMapping("/reset-password")
-    public ResponseEntity<APIResponse<String>> resetPassword(@RequestParam String resetToken, @RequestBody String newPassword) {
-        authService.resetPassword(resetToken, newPassword);
-        return ResponseEntity.ok(new APIResponse<>(true, "Password has been reset successfully"));
+    @PostMapping("/verifyOTP/{otp}/{email}")
+    public ResponseEntity<APIResponse<String>> verifyOTP(@PathVariable Integer otp, @PathVariable String email) {
+        try {
+            authService.verifyOTP(otp, email);
+            return ResponseEntity.ok(new APIResponse<>(true, "OTP verified!"));
+        } catch (InvalidTokenException | TokenExpiredException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new APIResponse<>(false, e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/reset-password/{email}")
+    public ResponseEntity<APIResponse<String>> resetPassword(@RequestBody ResetPasswordDTO resetPasswordDTO, @PathVariable String email) {
+        try {
+            authService.resetPassword(resetPasswordDTO, email);
+            return ResponseEntity.ok(new APIResponse<>(true, "Password has been reset successfully"));
+        } catch (PasswordNotMatchException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new APIResponse<>(false, "Password do not match", null, e.getMessage()));
+        } catch (AccessDeniedException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new APIResponse<>(false, "OTP not verified", null, e.getMessage()));
+        }
     }
 
 }

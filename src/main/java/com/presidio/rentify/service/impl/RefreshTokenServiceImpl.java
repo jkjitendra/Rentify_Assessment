@@ -11,6 +11,7 @@ import com.presidio.rentify.service.RefreshTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -27,6 +28,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Autowired
     private UserRepository userRepository;
 
+
+    @Override
+    @Transactional
     public RefreshToken createRefreshToken(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
@@ -42,6 +46,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return refreshToken;
     }
 
+    @Override
+    @Transactional
     public RefreshToken verifyRefreshToken(String refreshToken) {
         RefreshToken rfToken = refreshTokenRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new ResourceNotFoundException("RefreshToken", "refreshToken", refreshToken));

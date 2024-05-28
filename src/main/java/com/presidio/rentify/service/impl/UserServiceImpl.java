@@ -7,10 +7,11 @@ import com.presidio.rentify.dto.UserDTO.UserResponseWithTokenDTO;
 import com.presidio.rentify.entity.User;
 import com.presidio.rentify.exception.PasswordNotMatchException;
 import com.presidio.rentify.exception.ResourceNotFoundException;
-import com.presidio.rentify.repository.UserRepository;
+import com.presidio.rentify.repository.*;
 import com.presidio.rentify.service.UserService;
 import com.presidio.rentify.util.JwtUtil;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.PropertyMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,21 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private PropertyRepository propertyRepository;
+
+    @Autowired
+    private InterestRepository interestRepository;
+
+    @Autowired
+    private PropertyLikeRepository propertyLikeRepository;
+
+    @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -47,40 +63,39 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponseDTO updateUser(Long id, UserRequestDTO userRequestDTO) {
-        return userRepository.findById(id).map(user -> {
-            modelMapper.map(userRequestDTO, user);
-            User updatedUser = userRepository.save(user);
-            return modelMapper.map(updatedUser, UserResponseDTO.class);
-        }).orElseThrow(() -> new ResourceNotFoundException("User", "userId", id));
+        User existingUser = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        existingUser.setFirstName(userRequestDTO.getFirstName());
+        existingUser.setLastName(userRequestDTO.getLastName());
+        existingUser.setEmail(userRequestDTO.getEmail());
+        existingUser.setPhoneNumber(userRequestDTO.getPhoneNumber());
+        User updatedUser = userRepository.save(existingUser);
+        return modelMapper.map(updatedUser, UserResponseDTO.class);
     }
 
     @Override
     @Transactional
     public UserResponseWithTokenDTO updatePassword(Long id, PasswordUpdateDTO passwordUpdateDTO) {
-        return userRepository.findById(id).map(user -> {
-            if (!passwordEncoder.matches(passwordUpdateDTO.getOldPassword(), user.getPassword())) {
-                throw new PasswordNotMatchException("User", "oldPassword", passwordUpdateDTO.getOldPassword());
-            }
-            user.setPassword(passwordEncoder.encode(passwordUpdateDTO.getNewPassword()));
-            User updatedUser = userRepository.save(user);
 
-            // Generate new JWT token
-            String newToken = jwtUtil.generateToken(updatedUser);
+        User existingUser = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+        if (!passwordEncoder.matches(passwordUpdateDTO.getOldPassword(), existingUser.getPassword())) {
+            throw new PasswordNotMatchException("User", "oldPassword", passwordUpdateDTO.getOldPassword());
+        }
+        existingUser.setPassword(passwordEncoder.encode(passwordUpdateDTO.getNewPassword()));
+        User updatedUser = userRepository.save(existingUser);
 
-            // Map updated user to UserResponseDTO and create UserResponseWithTokenDTO
-            UserResponseDTO userResponseDTO = modelMapper.map(updatedUser, UserResponseDTO.class);
-            return new UserResponseWithTokenDTO(userResponseDTO, newToken);
-        }).orElseThrow(() -> new ResourceNotFoundException("User", "userId", id));
+        // Generate new JWT token
+        String newToken = jwtUtil.generateToken(updatedUser);
 
+        // Map updated user to UserResponseDTO and create UserResponseWithTokenDTO
+        UserResponseDTO userResponseDTO = modelMapper.map(updatedUser, UserResponseDTO.class);
+        return new UserResponseWithTokenDTO(userResponseDTO, newToken);
     }
 
     @Override
     @Transactional
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("User", "userId", id);
-        }
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "userId", id));
+        userRepository.delete(user);
     }
 
 }

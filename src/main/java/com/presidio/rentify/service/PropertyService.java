@@ -22,4 +22,8 @@ public interface PropertyService {
     void deleteProperty(Long propertyId);
 
     PropertyResponseDTO likeProperty(Long propertyId);
+
+    boolean isOwner(Long userId, String authenticatedUsername);
+
+    boolean isOwnerByPropertyId(Long propertyId, String authenticatedUsername);
 }

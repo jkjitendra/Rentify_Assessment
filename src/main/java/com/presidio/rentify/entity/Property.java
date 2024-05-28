@@ -2,6 +2,7 @@ package com.presidio.rentify.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,19 +27,19 @@ public class Property {
     private String place;
 
     @Column(nullable = false)
-    @NotBlank
+    @NotNull
     private Double area;
 
     @Column(nullable = false)
-    @NotBlank
+    @NotNull
     private Integer numberOfBedrooms;
 
     @Column(nullable = false)
-    @NotBlank
+    @NotNull
     private Integer numberOfBathrooms;
 
     @Column(nullable = false)
-    @NotBlank
+    @NotNull
     private Double price;
 
     @Column(nullable = false)
@@ -56,11 +57,14 @@ public class Property {
     private Integer numberOfPublicTransportsNearby;
 
 
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
-    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private Set<Interest> interests;
+
+    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private Set<PropertyLike> propertyLikes;
 
 }

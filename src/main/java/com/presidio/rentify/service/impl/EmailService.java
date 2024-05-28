@@ -1,5 +1,6 @@
 package com.presidio.rentify.service.impl;
 
+import com.presidio.rentify.dto.MailBody;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -11,11 +12,13 @@ public class EmailService {
   @Autowired
   private JavaMailSender mailSender;
 
-  public void sendEmail(String to, String subject, String text) {
+  public void sendEmail(MailBody mailBody) {
     SimpleMailMessage message = new SimpleMailMessage();
-    message.setTo(to);
-    message.setSubject(subject);
-    message.setText(text);
+
+    message.setTo(mailBody.getTo());
+    message.setSubject(mailBody.getSubject());
+    message.setText(mailBody.getText());
+
     mailSender.send(message);
   }
 }

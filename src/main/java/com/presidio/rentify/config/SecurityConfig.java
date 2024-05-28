@@ -1,6 +1,8 @@
 package com.presidio.rentify.config;
 
 
+import com.presidio.rentify.exception.ResourceNotFoundException;
+import com.presidio.rentify.repository.UserRepository;
 import com.presidio.rentify.service.impl.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -33,9 +35,17 @@ public class SecurityConfig {
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @Autowired
+    private UserRepository userRepository;
+
+//    @Bean
+//    public UserDetailsService userDetailsService() {
+//        return new CustomUserDetailsService();
+//    }
+
     @Bean
     public UserDetailsService userDetailsService() {
-        return new CustomUserDetailsService();
+        return username -> userRepository.findByEmail(username).orElseThrow(() -> new ResourceNotFoundException("User", "email", username));
     }
 
     @Bean
