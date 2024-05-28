@@ -7,4 +7,6 @@ public interface RefreshTokenService {
     RefreshToken createRefreshToken(String email);
 
     RefreshToken verifyRefreshToken(String refreshToken);
+
+    void deleteRefreshToken(String refreshToken);
 }

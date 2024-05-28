@@ -8,13 +8,13 @@ import com.presidio.rentify.exception.TokenExpiredException;
 import com.presidio.rentify.repository.RefreshTokenRepository;
 import com.presidio.rentify.repository.UserRepository;
 import com.presidio.rentify.service.RefreshTokenService;
+import com.presidio.rentify.util.GeneratorUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Service
 public class RefreshTokenServiceImpl implements RefreshTokenService {
@@ -29,20 +29,18 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     private UserRepository userRepository;
 
 
+
     @Override
     @Transactional
     public RefreshToken createRefreshToken(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
-        RefreshToken refreshToken = user.getRefreshToken();
-        if (refreshToken == null) {
-            refreshToken = RefreshToken.builder()
-                    .refreshToken(UUID.randomUUID().toString())
-                    .expirationTime(Instant.now().plusMillis(refreshExpirationTime))
-                    .user(user)
-                    .build();
-            refreshTokenRepository.save(refreshToken);
-        }
+        RefreshToken refreshToken = new RefreshToken();
+        refreshToken.setRefreshToken(GeneratorUtils.generateRefreshToken());
+        refreshToken.setExpirationTime(Instant.now().plusMillis(refreshExpirationTime));
+        refreshToken.setUser(user);
+
+        refreshTokenRepository.save(refreshToken);
         return refreshToken;
     }
 
@@ -58,5 +56,11 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         }
 
         return rfToken;
+    }
+
+    @Override
+    @Transactional
+    public void deleteRefreshToken(String refreshToken) {
+        refreshTokenRepository.deleteByRefreshToken(refreshToken);
     }
 }

@@ -1,12 +1,10 @@
 package com.presidio.rentify.service.impl;
 
-import com.presidio.rentify.dto.APIResponse;
 import com.presidio.rentify.dto.AuthDTO.AuthRequest;
 import com.presidio.rentify.dto.AuthDTO.AuthResponse;
 import com.presidio.rentify.dto.AuthDTO.RegisterRequestBody;
 import com.presidio.rentify.dto.AuthDTO.ResetPasswordDTO;
 import com.presidio.rentify.dto.MailBody;
-import com.presidio.rentify.dto.UserDTO.PasswordUpdateDTO;
 import com.presidio.rentify.dto.UserDTO.UserResponseDTO;
 import com.presidio.rentify.entity.PasswordResetToken;
 import com.presidio.rentify.entity.RefreshToken;
@@ -18,13 +16,11 @@ import com.presidio.rentify.repository.UserRepository;
 import com.presidio.rentify.service.AuthService;
 import com.presidio.rentify.service.RefreshTokenService;
 import com.presidio.rentify.util.JwtUtil;
-import com.presidio.rentify.util.OTPGenerator;
+import com.presidio.rentify.util.GeneratorUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 import static com.presidio.rentify.constants.AppConstants.OTP_SUBJECT;
 import static com.presidio.rentify.constants.AppConstants.OTP_TEXT;
@@ -60,6 +55,9 @@ public class AuthServiceImpl implements AuthService {
 
     @Autowired
     private EmailService emailService;
+
+    @Value("${otp.expiration-time}")
+    private Long otpExpirationTime;
 
     @Override
     @Transactional
@@ -101,7 +99,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void forgotPassword(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
-        int otp = OTPGenerator.generateOTP();
+        int otp = GeneratorUtils.generateOTP();
         MailBody mailBody = MailBody.builder()
                 .to(email)
                 .subject(OTP_SUBJECT)
@@ -112,7 +110,7 @@ public class AuthServiceImpl implements AuthService {
         token.setOtp(otp);
         token.setUser(user);
         token.setVerified(false);
-        token.setExpirationTime(Instant.now().plusSeconds(300)); // OTP expires in 5 mins
+        token.setExpirationTime(Instant.now().plusSeconds(otpExpirationTime)); // OTP expires in 5 mins
         passwordResetTokenRepository.save(token);
 
         try {
