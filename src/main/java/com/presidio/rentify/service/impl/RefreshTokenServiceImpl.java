@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 public class RefreshTokenServiceImpl implements RefreshTokenService {
@@ -35,6 +36,19 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken createRefreshToken(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
+        Optional<RefreshToken> existingTokenOp = refreshTokenRepository.findByUser(user);
+
+        if (existingTokenOp.isPresent()) {
+            RefreshToken existingToken = existingTokenOp.get();
+            // Check if the existing token is expired
+            if (existingToken.getExpirationTime().isAfter(Instant.now())) {
+                return existingToken;
+            }
+            // If the token is expired, delete it
+            refreshTokenRepository.delete(existingToken);
+        }
+
+        // Create a new refresh token
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setRefreshToken(GeneratorUtils.generateRefreshToken());
         refreshToken.setExpirationTime(Instant.now().plusMillis(refreshExpirationTime));
