@@ -36,17 +36,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken createRefreshToken(String email) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
 
-        Optional<RefreshToken> existingTokenOp = refreshTokenRepository.findByUser(user);
-
-        if (existingTokenOp.isPresent()) {
-            RefreshToken existingToken = existingTokenOp.get();
-            // Check if the existing token is expired
-            if (existingToken.getExpirationTime().isAfter(Instant.now())) {
-                return existingToken;
-            }
-            // If the token is expired, delete it
-            refreshTokenRepository.delete(existingToken);
-        }
+        // Delete existing refresh token if present
+        refreshTokenRepository.findByUser(user).ifPresent(refreshTokenRepository::delete);;
 
         // Create a new refresh token
         RefreshToken refreshToken = new RefreshToken();
@@ -64,7 +55,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         RefreshToken rfToken = refreshTokenRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new ResourceNotFoundException("RefreshToken", "refreshToken", refreshToken));
 
-        if (rfToken.getExpirationTime().compareTo(Instant.now()) < 0) {
+        if (rfToken.getExpirationTime().isBefore(Instant.now())) {
             refreshTokenRepository.delete(rfToken);
             throw new TokenExpiredException("refreshToken");
         }
