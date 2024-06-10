@@ -106,34 +106,39 @@ public class AuthController {
 
 //    @PreAuthorize("isAuthenticated()")
     @PostMapping("/refresh")
-    public ResponseEntity<APIResponse<AuthResponse>> createRefreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
-        RefreshToken oldRefreshToken = refreshTokenService.verifyRefreshToken(refreshTokenRequest.getRefreshToken());
+    public ResponseEntity<APIResponse<AuthResponse>> createAccessToken(HttpServletRequest request) {
+        String refreshToken = null;
+        for (Cookie cookie : request.getCookies()) {
+            if (cookie.getName().equals("refreshToken")) {
+                refreshToken = cookie.getValue();
+            }
+        }
 
-        User user = oldRefreshToken.getUser();
-        String accessToken = jwtUtil.generateToken(user);
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new APIResponse<>(false, "Refresh token is missing", null));
+        }
 
-        // Create a new refresh token and delete the old one
-        refreshTokenService.deleteRefreshToken(oldRefreshToken.getRefreshToken());
-        RefreshToken newRefreshToken = refreshTokenService.createRefreshToken(user.getEmail());
+        try {
+            RefreshToken oldRefreshToken = refreshTokenService.verifyRefreshToken(refreshToken);
+            User user = oldRefreshToken.getUser();
+            String accessToken = jwtUtil.generateToken(user);
 
-        AuthResponse authResponse = AuthResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(newRefreshToken.getRefreshToken())
-                .build();
+            AuthResponse authResponse = AuthResponse.builder()
+                    .accessToken(accessToken)
+                    .build();
 
-        // Set the new refresh token as an HTTP-only cookie
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", authResponse.getRefreshToken())
-                .httpOnly(true)
-                .secure(isCookieSecure)
-                .path("/")
-                .maxAge(7 * 24 * 60 * 60) // 7 days
-                .sameSite("Strict")
-                .build();
+            return ResponseEntity.ok()
+                    .body(new APIResponse<>(true, "Token refreshed successfully", authResponse));
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString())
-                .body(new APIResponse<>(true, "Token refreshed successfully", AuthResponse.builder().accessToken(authResponse.getAccessToken()).build()));
-
+        } catch (TokenExpiredException ex) {
+            refreshTokenService.deleteRefreshToken(refreshToken);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new APIResponse<>(false, "Refresh token expired", null));
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new APIResponse<>(false, "Invalid refresh token", null));
+        }
     }
 
     @PostMapping("/forgot-password")
