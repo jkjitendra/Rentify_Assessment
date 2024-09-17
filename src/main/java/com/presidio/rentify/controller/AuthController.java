@@ -59,7 +59,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<APIResponse<UserResponseDTO>> registerUser(@Valid @RequestBody RegisterRequestBody registerRequestBody) {
         UserResponseDTO userResponse = authService.registerUser(registerRequestBody);
-        return ResponseEntity.ok(new APIResponse<>(true, "User registered successfully", userResponse));
+        return ResponseEntity.ok(new APIResponse<>(true, "User registered successfully"));
     }
 
     @PostMapping("/login")
