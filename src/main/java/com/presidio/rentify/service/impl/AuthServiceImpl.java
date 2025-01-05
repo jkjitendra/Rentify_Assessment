@@ -64,8 +64,6 @@ public class AuthServiceImpl implements AuthService {
     public UserResponseDTO registerUser(RegisterRequestBody registerRequestBody) {
         Optional<User> userOptional = userRepository.findByEmail(registerRequestBody.getEmail());
         if (userOptional.isEmpty()) {
-//            User user = modelMapper.map(userRequestDTO, User.class);
-//            user.setPassword(passwordEncoder.encode(userRequestDTO.getPassword()));
             User user = User.builder()
                     .firstName(registerRequestBody.getFirstName())
                     .lastName(registerRequestBody.getLastName())
@@ -84,7 +82,6 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AuthResponse login(AuthRequest authRequest) {
-//        final UserDetails userDetails = userDetailsService.loadUserByUsername(authRequest.getEmail());
         final User user = userRepository.findByEmail(authRequest.getEmail()).orElseThrow(() -> new ResourceNotFoundException("User", "email", authRequest.getEmail()));
         final String accessToken = jwtUtil.generateToken(user);
         final RefreshToken refreshToken = refreshTokenService.createRefreshToken(authRequest.getEmail());
